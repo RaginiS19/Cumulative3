@@ -1,15 +1,23 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using CumulativeProject.Models;
 using MySql.Data.MySqlClient;
 using System;
 
 namespace CumulativeProject.Controllers
 {
+    /// <summary>
+    /// MVC Controller for rendering views and handling form submissions related to teachers.
+    /// </summary>
     public class TeacherPageController : Controller
     {
+        // Database context used to access and interact with the school database.
         private readonly SchoolDbContext _context = new SchoolDbContext();
 
-        // GET: /TeacherPage/Edit/5
+        /// <summary>
+        /// Loads the teacher's data into an editable form.
+        /// </summary>
+        /// <param name="id">ID of the teacher to be edited.</param>
+        /// <returns>Returns the Edit view populated with the teacher's data, or redirects if not found.</returns>
         public IActionResult Edit(int id)
         {
             Teacher teacher = new Teacher();
@@ -32,35 +40,42 @@ namespace CumulativeProject.Controllers
             }
             else
             {
-                // Teacher not found in the database
+                // Teacher not found
                 TempData["ErrorMessage"] = "Teacher not found!";
-                return RedirectToAction("Index", "Home");  // Redirect to a home
+                return RedirectToAction("Index", "Home");
             }
 
-            return View(teacher); // Returns Views/Teacher/Edit.cshtml
+            return View(teacher);
         }
 
-        // POST: /TeacherPage/Update
+        /// <summary>
+        /// Updates a teacher's information in the database after form submission.
+        /// </summary>
+        /// <param name="teacher">The updated teacher object from the form.</param>
+        /// <returns>
+        /// Redirects to Edit page on success,
+        /// or returns the same view with validation errors if input is invalid.
+        /// </returns>
         [HttpPost]
         public IActionResult Update(Teacher teacher)
         {
             if (ModelState.IsValid)
             {
-                //Check if Teacher's First Name or Last Name is empty.
+                // Validate required fields
                 if (string.IsNullOrEmpty(teacher.TeacherFName) || string.IsNullOrEmpty(teacher.TeacherLName))
                 {
                     ModelState.AddModelError("TeacherFName", "First Name and Last Name are required.");
                     return View("Edit", teacher);
                 }
 
-                //Check if Teacher's Hire Date is not in the future.
+                // Validate hire date
                 if (teacher.HireDate > DateTime.Now)
                 {
                     ModelState.AddModelError("HireDate", "Hire Date cannot be in the future.");
                     return View("Edit", teacher);
                 }
 
-                //Check if Teacher's Salary is not less than 0.
+                // Validate salary
                 if (teacher.Salary < 0)
                 {
                     ModelState.AddModelError("Salary", "Salary must be greater than or equal to 0.");
@@ -70,7 +85,7 @@ namespace CumulativeProject.Controllers
                 using var conn = _context.AccessDatabase();
                 conn.Open();
 
-                //Check if the teacher exists in the database.
+                // Check if teacher exists
                 string checkQuery = "SELECT COUNT(*) FROM teachers WHERE teacherid = @TeacherId";
                 using var checkCmd = new MySqlCommand(checkQuery, conn);
                 checkCmd.Parameters.AddWithValue("@TeacherId", teacher.TeacherId);
@@ -78,11 +93,11 @@ namespace CumulativeProject.Controllers
 
                 if (count == 0)
                 {
-                    // Teacher not found in the database
                     TempData["ErrorMessage"] = "Teacher not found!";
                     return RedirectToAction("Edit", new { id = teacher.TeacherId });
                 }
 
+                // Update query
                 string query = @"UPDATE teachers 
                                     SET teacherfname = @FirstName,
                                         teacherlname = @LastName,
@@ -101,7 +116,6 @@ namespace CumulativeProject.Controllers
 
                 cmd.ExecuteNonQuery();
 
-                // Success message
                 TempData["SuccessMessage"] = "Teacher information updated successfully!";
                 return RedirectToAction("Edit", new { id = teacher.TeacherId });
             }
