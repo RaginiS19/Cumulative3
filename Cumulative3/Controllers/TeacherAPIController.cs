@@ -1,16 +1,28 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using CumulativeProject.Models;
 using MySql.Data.MySqlClient;
 
 namespace CumulativeProject.Controllers
 {
+    /// <summary>
+    /// API Controller for managing teacher data.
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class TeacherAPIController : ControllerBase
     {
+        // Database context used to access the school database.
         private readonly SchoolDbContext _context = new SchoolDbContext();
 
-        // PUT: api/TeacherAPI/5
+        /// <summary>
+        /// Updates an existing teacher's details in the database.
+        /// </summary>
+        /// <param name="id">The ID of the teacher to update.</param>
+        /// <param name="updatedTeacher">The updated teacher data sent in the request body.</param>
+        /// <returns>
+        /// HTTP 200 OK if update is successful,
+        /// or HTTP 404 Not Found if no teacher is found with the given ID.
+        /// </returns>
         [HttpPut("{id}")]
         public IActionResult UpdateTeacher(int id, [FromBody] Teacher updatedTeacher)
         {
@@ -23,22 +35,4 @@ namespace CumulativeProject.Controllers
                                  employeenumber = @EmployeeNumber,
                                  hiredate = @HireDate,
                                  salary = @Salary
-                             WHERE teacherid = @TeacherId";
-
-            using var cmd = new MySqlCommand(query, conn);
-            cmd.Parameters.AddWithValue("@FirstName", updatedTeacher.TeacherFName);
-            cmd.Parameters.AddWithValue("@LastName", updatedTeacher.TeacherLName);
-            cmd.Parameters.AddWithValue("@EmployeeNumber", updatedTeacher.EmployeeNumber);
-            cmd.Parameters.AddWithValue("@HireDate", updatedTeacher.HireDate);
-            cmd.Parameters.AddWithValue("@Salary", updatedTeacher.Salary);
-            cmd.Parameters.AddWithValue("@TeacherId", id);
-
-            int rowsAffected = cmd.ExecuteNonQuery();
-
-            if (rowsAffected > 0)
-                return Ok(new { message = "Teacher updated successfully." });
-            else
-                return NotFound(new { message = "Teacher not found." });
-        }
-    }
-}
+                             WHERE teacher
